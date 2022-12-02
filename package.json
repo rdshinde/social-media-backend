@@ -1,0 +1,30 @@
+{
+  "name": "social-media-backend",
+  "version": "1.0.0",
+  "description": "ExpressJS backend for social media app.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "heroku-postbuild": "npm install",
+    "start": "nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rdshinde/social-media-backend.git"
+  },
+  "keywords": [],
+  "author": "Rishikesh Shinde",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rdshinde/social-media-backend/issues"
+  },
+  "homepage": "https://github.com/rdshinde/social-media-backend#readme",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "mongoose": "^6.7.5",
+    "nodemon": "^2.0.20",
+    "uuid": "^9.0.0"
+  }
+}
