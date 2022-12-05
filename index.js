@@ -12,12 +12,16 @@ app.use(cors());
 
 const { connectDB } = require("./db/db.connect.js");
 
+const { authV1 } = require("./routes/auth.route.js");
+
 connectDB();
 const { DocsObj } = require("./utils");
 
 app.get("/", (req, res) => {
   res.json({ ...DocsObj });
 });
+
+app.use("/api/v1/auth", authV1);
 
 /**
  * 404 Route Handler

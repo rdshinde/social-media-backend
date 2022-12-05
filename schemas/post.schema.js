@@ -54,6 +54,12 @@ const postSchema = new Schema({
   timestamps: true,
   collection: "posts",
 });
+postSchema.pre('find', function() {
+  this.postLikes.populate('likes');
+  this.postComments.populate('comments');
+  this.postAuthor.populate('postAuthor');
+  this.postId.populate('postId');
+});
 
 module.exports = { postSchema };
 module.exports = mongoose.model("Post", postSchema);

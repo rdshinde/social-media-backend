@@ -32,7 +32,7 @@ const userSchema = new Schema({
       trim: true,
       match: /.+\@.+\..+/, // regex for email
       minlength: 3,
-      maxlength: 20,
+      maxlength: 30,
       unique: true,
     },
     password: {
@@ -40,7 +40,6 @@ const userSchema = new Schema({
       required: true,
       trim: true,
       minlength: 3,
-      maxlength: 20,
     },
     profilePic: {
       picUrl: {
@@ -80,12 +79,12 @@ const userSchema = new Schema({
     },
     website: {
       type: String,
-      required: true,
+      required: false,
     },
     joinedOn: {
       type: Date,
       required: true,
-      default: Date.now(),
+      default: 0,
     },
   },
   connections: {
@@ -98,7 +97,7 @@ const userSchema = new Schema({
       ],
       type: Number,
       required: true,
-      default: this.followers.users.length,
+      default: 0,
     },
     following: {
       users: [
@@ -109,7 +108,7 @@ const userSchema = new Schema({
       ],
       type: Number,
       required: true,
-      default: this.following.users.length,
+      default: 0,
     },
   },
   postsDetails: {
@@ -122,7 +121,7 @@ const userSchema = new Schema({
     postsCount: {
       type: Number,
       required: true,
-      default: this.posts.length,
+      default: 0,
     },
   },
   likesDetails: {
@@ -135,7 +134,7 @@ const userSchema = new Schema({
     likesCount: {
       type: Number,
       required: true,
-      default: this.likes.length,
+      default: 0,
     },
   },
   commentsDetails: {
@@ -148,7 +147,7 @@ const userSchema = new Schema({
     commentsCount: {
       type: Number,
       required: true,
-      default: this.comments.length,
+      default: 0,
     },
   },
   notificationsDetails: {
@@ -161,7 +160,7 @@ const userSchema = new Schema({
     notificationsCount: {
       type: Number,
       required: true,
-      default: this.notifications.length,
+      default: 0,
     },
   },
   bookmarksDetails: {
@@ -174,11 +173,21 @@ const userSchema = new Schema({
     bookmarksCount: {
       type: Number,
       required: true,
-      default: this.bookmarks.length,
+      default: 0,
     },
   },
-  timestamps: true,
-  collection: "users",
+
+  // collection: "users",
+});
+userSchema.pre("find", function () {
+  this.connections?.followers?.populate("users");
+  this.connections?.following?.populate("users");
+  this.postsDetails?.posts?.populate("posts");
+  this.likesDetails?.likes?.populate("likes");
+  this.commentsDetails?.comments?.populate("comments");
+  this.notificationsDetails?.notifications?.populate("notifications");
+  this.bookmarksDetails?.bookmarks?.populate("bookmarks");
 });
 module.exports = { userSchema };
-module.exports = mongoose.model("User", userSchema);
+const User = mongoose.model("User", userSchema);
+module.exports = { User };
