@@ -1,16 +1,17 @@
 const express = require("express");
 const sign = require("jwt-encode");
 const unsign = require("jwt-decode");
-
+const { sendVerificationEmail } = require("../utils/verificationMail");
 const { v4: uuid } = require("uuid");
 const authV1 = express.Router();
-
+const {
+  isUserEmailVerified,
+} = require("../middlewares/verifyUserEmail.middleware");
 const { User } = require("../schemas/user.schema");
 
-authV1.route("/login").post(async (req, res) => {
+authV1.route("/login").post(isUserEmailVerified, async (req, res) => {
   try {
     const userData = req.body;
-
     const foundUser = await User.findOne({
       email: userData.email,
     });
@@ -74,7 +75,19 @@ authV1.route(`/signup`).post(async (req, res) => {
         process.env.USER_PWD_SECRET,
         { expiresIn: "24h" }
       );
-      res.status(201).json({ success: true, savedUser, encodedToken });
+      if (sendVerificationEmail(userEmail, encodedToken)) {
+        res.status(201).json({
+          success: true,
+          savedUser,
+          encodedToken,
+          message: "User created succefully. Please verify your email.",
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          message: "Unable to send verification email.",
+        });
+      }
     }
   } catch (err) {
     res.status(500).json({
@@ -100,6 +113,41 @@ authV1.route("/verify-handle").post(async (req, res) => {
       res.status(200).json({
         success: true,
         message: "Handle name is available.",
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+      error: error.message,
+    });
+  }
+});
+
+authV1.route("/verify-email/:token").post(async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { _id } = unsign(token, process.env.USER_PWD_SECRET);
+    const foundUser = await User.find({ _id: _id });
+    console.log(foundUser[0]);
+    if (foundUser[0]) {
+      const verifiedUser = await User.updateOne(
+        { _id: _id },
+        {
+          $set: {
+            isUserVerified: true,
+          },
+        }
+      );
+      res.status(200).json({
+        success: true,
+        message: "Email verified successfully.",
+        verifiedUser,
+      });
+    } else {
+      res.status(404).json({
+        success: false,
+        message: "User not found.",
       });
     }
   } catch (error) {

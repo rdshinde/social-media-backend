@@ -13,6 +13,7 @@ app.use(cors());
 const { connectDB } = require("./db/db.connect.js");
 
 const { authV1 } = require("./routes/auth.route.js");
+const { profileV1 } = require("./routes/profile.route.js");
 
 connectDB();
 const { DocsObj } = require("./utils");
@@ -22,6 +23,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/v1/auth", authV1);
+app.use("/api/v1/user", profileV1);
 
 /**
  * 404 Route Handler

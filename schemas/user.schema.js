@@ -3,6 +3,11 @@ const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
 const userSchema = new Schema({
+  isUserVerified: {
+    type: Boolean,
+    required: true,
+    default: false,
+  },
   personalDetails: {
     firstName: {
       type: String,
