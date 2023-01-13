@@ -6,6 +6,7 @@ const { v4: uuid } = require("uuid");
 const profileV1 = express.Router();
 
 const { User } = require("../schemas/user.schema");
+const { updatePersonalDetails } = require("../utils/updatePersonalDetails");
 
 profileV1.route("/").get(async (req, res) => {
   try {
@@ -30,7 +31,7 @@ profileV1
   .route("/:id")
   .get(verifyUser, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = req.userId;
       const foundUser = await User.find({
         "personalDetails.handleName": id,
       });
@@ -51,20 +52,17 @@ profileV1
   })
   .post(verifyUser, async (req, res) => {
     try {
-      const { id } = req.params;
-      const foundUser = await User.findById(req.userId);
+      const id = req.userId;
+      const foundUser = await User.findOne({
+        "personalDetails.handleName": id,
+      });
       if (!foundUser) {
         res.status(404).json({
           success: false,
           message: "User not found.",
         });
       }
-      // await User.updateOne(
-      //   { "personalDetails.handleName": id },
-      //   { $set: { personalDetails: req.body } }
-      // );
-      console.log(foundUser.personalDetails);
-      foundUser.personalDetails = { ...foundUser.personalDetails, ...req.body };
+      updatePersonalDetails(foundUser, req);
       const updatedUser = await foundUser.save();
       res.json({ success: true, updatedUser });
     } catch (error) {

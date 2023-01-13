@@ -1,13 +1,14 @@
 const { User } = require("../schemas/user.schema");
-
+const unsign = require("jwt-decode");
 const verifyUser = async (req, res, next) => {
   try {
-    const userId = req.headers.authorization;
+    const token = req.headers.authorization;
     const { id } = req.params;
-    if (userId) {
-      const foundUser = await User.find({ _id: userId });
+    const encodedToken = unsign(token, process.env.USER_PWD_SECRET);
+    if (encodedToken._doc._id) {
+      const foundUser = await User.find({ _id: encodedToken._doc._id });
       if (foundUser[0].personalDetails.handleName === id) {
-        req.userId = userId;
+        req.userId = foundUser[0].personalDetails.handleName;
         next();
       }
     } else {
