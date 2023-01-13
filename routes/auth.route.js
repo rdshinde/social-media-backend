@@ -124,14 +124,13 @@ authV1.route("/verify-handle").post(async (req, res) => {
   }
 });
 
-authV1.route("/verify-email/:token").post(async (req, res) => {
+authV1.route("/verify-email/:token").get(async (req, res) => {
   try {
     const { token } = req.params;
     const { _id } = unsign(token, process.env.USER_PWD_SECRET);
     const foundUser = await User.find({ _id: _id });
-    console.log(foundUser[0]);
     if (foundUser[0]) {
-      const verifiedUser = await User.updateOne(
+      await User.updateOne(
         { _id: _id },
         {
           $set: {
@@ -139,10 +138,11 @@ authV1.route("/verify-email/:token").post(async (req, res) => {
           },
         }
       );
+      const updatedUser = await User.find({ _id: _id });
       res.status(200).json({
         success: true,
         message: "Email verified successfully.",
-        verifiedUser,
+        verifiedUser: updatedUser[0],
       });
     } else {
       res.status(404).json({

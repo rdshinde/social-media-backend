@@ -27,8 +27,8 @@ const sendVerificationEmail = async (email, token) => {
         `http://localhost:3000/api/v1/auth/verify-email/${token}`
       ),
     });
-    console.log("Message sent: %s", info.messageId);
-    console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
+    // console.log("Message sent: %s", info.messageId);
+    // console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
     if (info.messageId) {
       return true;
     } else {

@@ -52,25 +52,25 @@ profileV1
   .post(verifyUser, async (req, res) => {
     try {
       const { id } = req.params;
-      const foundUser = await User.find({
-        "personalDetails.handleName": id,
-      });
-
+      const foundUser = await User.findById(req.userId);
       if (!foundUser) {
         res.status(404).json({
           success: false,
           message: "User not found.",
         });
       }
-      const updatedUser = await User.updateOne(
-        { "personalDetails.handleName": id },
-        { $set: { personalDetails: req.body } }
-      );
+      // await User.updateOne(
+      //   { "personalDetails.handleName": id },
+      //   { $set: { personalDetails: req.body } }
+      // );
+      console.log(foundUser.personalDetails);
+      foundUser.personalDetails = { ...foundUser.personalDetails, ...req.body };
+      const updatedUser = await foundUser.save();
       res.json({ success: true, updatedUser });
     } catch (error) {
       res.status(500).json({
         success: false,
-        message: "Internal server error.",
+        message: "Internal server error...",
         error: error.message,
       });
     }
