@@ -10,6 +10,11 @@ const verifyUser = async (req, res, next) => {
       if (foundUser[0].personalDetails.handleName === id) {
         req.userId = foundUser[0].personalDetails.handleName;
         next();
+      } else {
+        res.status(401).json({
+          success: false,
+          message: "Unauthorized access.",
+        });
       }
     } else {
       res.status(401).json({
