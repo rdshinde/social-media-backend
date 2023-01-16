@@ -71,6 +71,7 @@ profileV1
         message: "Internal server error...",
         error: error.message,
       });
+      
     }
   })
   .delete(verifyUser, async (req, res) => {

@@ -33,9 +33,15 @@ const userSchema = new Schema({
     },
     email: {
       type: String,
-      required: true,
+      required: [true, "Email is required"],
       trim: true,
       match: /.+\@.+\..+/, // regex for email
+      validate: {
+        validator: function (value) {
+          return this.match.test(value);
+        },
+        message: "Invalid email format.",
+      },
       minlength: 3,
       maxlength: 30,
       unique: true,
@@ -85,6 +91,14 @@ const userSchema = new Schema({
     website: {
       type: String,
       required: false,
+      match:
+        /(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/,
+      validate: {
+        validator: function (value) {
+          return this.match.test(value);
+        },
+        message: "Invalid website format",
+      },
     },
     joinedOn: {
       type: Date,
@@ -193,6 +207,7 @@ userSchema.pre("find", function () {
   this.notificationsDetails?.notifications?.populate("notifications");
   this.bookmarksDetails?.bookmarks?.populate("bookmarks");
 });
+
 module.exports = { userSchema };
 const User = mongoose.model("User", userSchema);
 module.exports = { User };
