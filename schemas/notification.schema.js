@@ -3,12 +3,6 @@ const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
 const notificationSchema = new Schema({
-  notificationId: {
-    type: Schema.Types.ObjectId,
-    required: true,
-    unique: true,
-    ref: "Notification",
-  },
   notificationContent: {
     textContent: {
       type: String,
@@ -55,10 +49,10 @@ const notificationSchema = new Schema({
     type: Date,
     required: true,
   },
-  timestamps: true,
-  collection: "notifications",
 });
 
 module.exports = { notificationSchema };
 
-module.exports = mongoose.model("Notification", notificationSchema);
+const Notification = mongoose.model("Notification", notificationSchema);
+
+module.exports = { Notification };

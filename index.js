@@ -17,6 +17,7 @@ const { profileV1 } = require("./routes/profile.route.js");
 
 connectDB();
 const { DocsObj } = require("./utils");
+const { postsV1 } = require("./routes/post.route.js");
 
 app.get("/", (req, res) => {
   res.json({ ...DocsObj });
@@ -24,6 +25,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/v1/auth", authV1);
 app.use("/api/v1/user", profileV1);
+app.use("/api/v1/posts", postsV1);
 
 /**
  * 404 Route Handler

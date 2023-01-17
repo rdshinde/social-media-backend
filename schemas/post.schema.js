@@ -3,12 +3,6 @@ const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
 const postSchema = new Schema({
-  postId: {
-    type: Schema.Types.ObjectId,
-    required: true,
-    unique: true,
-    ref: "Post",
-  },
   postContent: {
     textContent: {
       type: String,
@@ -51,15 +45,15 @@ const postSchema = new Schema({
     type: Date,
     required: true,
   },
-  timestamps: true,
-  collection: "posts",
 });
-postSchema.pre('find', function() {
-  this.postLikes.populate('likes');
-  this.postComments.populate('comments');
-  this.postAuthor.populate('postAuthor');
-  this.postId.populate('postId');
+postSchema.pre("find", function () {
+  this.postLikes?.populate("likes");
+  this.postComments?.populate("comments");
+  this.postAuthor?.populate("postAuthor");
+  this.postId?.populate("postId");
 });
 
 module.exports = { postSchema };
-module.exports = mongoose.model("Post", postSchema);
+const Post = mongoose.model("Post", postSchema);
+
+module.exports = { Post };
