@@ -43,6 +43,7 @@ postsV1.route("/:id").post(verifyUser, async (req, res) => {
     }
     const { post } = req.body;
     const newPost = new Post({
+      postAuthor: foundUser._id,
       postContent: {
         textContent: post.textContent,
         mediaContent: {
@@ -50,9 +51,10 @@ postsV1.route("/:id").post(verifyUser, async (req, res) => {
         },
       },
       postDate: Date.now(),
-      postAuther: foundUser._id,
     });
     const savedPost = await newPost.save();
+    foundUser.postsDetails.posts.push(savedPost._id);
+    foundUser.postsDetails.postsCount = foundUser.postsDetails.posts.length;
     if (!savedPost) {
       res.status(500).json({
         success: false,
@@ -73,13 +75,59 @@ postsV1.route("/:id").post(verifyUser, async (req, res) => {
       notificationDate: Date.now(),
     });
     const savedNotification = await newNotification.save();
+    foundUser.notificationsDetails.notifications.push(savedNotification._id);
     if (!savedNotification) {
       res.status(500).json({
         success: false,
         message: "Internal server error.",
       });
     }
-    res.json({ success: true, newPost: savedPost });
+    const savedUser = await foundUser.save();
+    res.json({ success: true, newPost: savedPost, updatedUser: savedUser });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+      error: error.message,
+    });
+  }
+});
+postsV1.route("/:postId/:id").post(verifyUser, async (req, res) => {
+  try {
+    const id = req.userId;
+    const postId = req.params.postId;
+
+    const { post } = req.body;
+    const foundPost = await Post.findOne({
+      _id: postId,
+    });
+    if (!foundPost) {
+      res.status(404).json({
+        success: false,
+        message: "Post not found.",
+      });
+    }
+    foundPost.postContent.textContent = post.textContent;
+    foundPost.postContent.isContentEdited = true;
+
+    const savedPost = await foundPost.save();
+
+    if (!savedPost) {
+      res.status(500).json({
+        success: false,
+        message: "Internal server error.",
+      });
+    }
+    const foundUser = await User.findOne({
+      "personalDetails.handleName": id,
+    }).populate("postsDetails.posts");
+    if (!foundUser) {
+      res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+    res.json({ success: true, updatedPost: savedPost, updatedUser: foundUser });
   } catch (error) {
     res.status(500).json({
       success: false,

@@ -36,12 +36,12 @@ const userSchema = new Schema({
       required: [true, "Email is required"],
       trim: true,
       match: /.+\@.+\..+/, // regex for email
-      validate: {
-        validator: function (value) {
-          return this.match.test(value);
-        },
-        message: "Invalid email format.",
-      },
+      // validate: {
+      //   validator: function (value) {
+      //     return this.match.test(value);
+      //   },
+      //   message: "Invalid email format.",
+      // },
       minlength: 3,
       maxlength: 30,
       unique: true,
@@ -114,6 +114,7 @@ const userSchema = new Schema({
           ref: "User",
         },
       ],
+
       type: Number,
       required: true,
       default: 0,
@@ -125,6 +126,7 @@ const userSchema = new Schema({
           ref: "User",
         },
       ],
+
       type: Number,
       required: true,
       default: 0,
@@ -195,17 +197,18 @@ const userSchema = new Schema({
       default: 0,
     },
   },
-
-  // collection: "users",
 });
-userSchema.pre("find", function () {
-  this.connections?.followers?.populate("users");
-  this.connections?.following?.populate("users");
-  this.postsDetails?.posts?.populate("posts");
-  this.likesDetails?.likes?.populate("likes");
-  this.commentsDetails?.comments?.populate("comments");
-  this.notificationsDetails?.notifications?.populate("notifications");
-  this.bookmarksDetails?.bookmarks?.populate("bookmarks");
+
+userSchema.pre(["find", "findOne", "deleteOne"], function () {
+  if (this.connections) {
+    this.populate("connections.followers.users");
+    this.populate("connections.following.users");
+  }
+  this.populate("postsDetails.posts");
+  this.populate("likesDetails.likes");
+  this.populate("commentsDetails.comments");
+  this.populate("notificationsDetails.notifications");
+  this.populate("bookmarksDetails.bookmarks");
 });
 
 module.exports = { userSchema };

@@ -18,6 +18,11 @@ const postSchema = new Schema({
         trim: true,
       },
     },
+    isContentEdited: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
   },
   postAuthor: {
     type: Schema.Types.ObjectId,
@@ -46,11 +51,11 @@ const postSchema = new Schema({
     required: true,
   },
 });
-postSchema.pre("find", function () {
-  this.postLikes?.populate("likes");
-  this.postComments?.populate("comments");
-  this.postAuthor?.populate("postAuthor");
-  this.postId?.populate("postId");
+
+postSchema.pre(["find", "findOne"], function () {
+  this.populate("postLikes.likes");
+  this.populate("postComments.comments");
+  this.populate("postAuthor");
 });
 
 module.exports = { postSchema };
