@@ -16,7 +16,6 @@ const transporter = nodemailer.createTransport({
 });
 
 const sendVerificationEmail = async (email, token) => {
-  console.log(email, token);
   try {
     const info = await transporter.sendMail({
       from: "Rishikesh Shinde",

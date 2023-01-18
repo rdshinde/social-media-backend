@@ -36,14 +36,8 @@ const userSchema = new Schema({
       required: [true, "Email is required"],
       trim: true,
       match: /.+\@.+\..+/, // regex for email
-      // validate: {
-      //   validator: function (value) {
-      //     return this.match.test(value);
-      //   },
-      //   message: "Invalid email format.",
-      // },
       minlength: 3,
-      maxlength: 30,
+      maxlength: 50,
       unique: true,
     },
     password: {
@@ -114,10 +108,6 @@ const userSchema = new Schema({
           ref: "User",
         },
       ],
-
-      type: Number,
-      required: true,
-      default: 0,
     },
     following: {
       users: [
@@ -126,10 +116,6 @@ const userSchema = new Schema({
           ref: "User",
         },
       ],
-
-      type: Number,
-      required: true,
-      default: 0,
     },
   },
   postsDetails: {
@@ -137,26 +123,17 @@ const userSchema = new Schema({
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Post",
+        unique: true,
       },
     ],
-    postsCount: {
-      type: Number,
-      required: true,
-      default: 0,
-    },
   },
   likesDetails: {
-    likes: [
+    likedPosts: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Post",
       },
     ],
-    likesCount: {
-      type: Number,
-      required: true,
-      default: 0,
-    },
   },
   commentsDetails: {
     comments: [
@@ -165,11 +142,6 @@ const userSchema = new Schema({
         ref: "Post",
       },
     ],
-    commentsCount: {
-      type: Number,
-      required: true,
-      default: 0,
-    },
   },
   notificationsDetails: {
     notifications: [
@@ -178,11 +150,6 @@ const userSchema = new Schema({
         ref: "Notification",
       },
     ],
-    notificationsCount: {
-      type: Number,
-      required: true,
-      default: 0,
-    },
   },
   bookmarksDetails: {
     bookmarks: [
@@ -191,11 +158,6 @@ const userSchema = new Schema({
         ref: "Post",
       },
     ],
-    bookmarksCount: {
-      type: Number,
-      required: true,
-      default: 0,
-    },
   },
 });
 
@@ -205,10 +167,38 @@ userSchema.pre(["find", "findOne", "deleteOne"], function () {
     this.populate("connections.following.users");
   }
   this.populate("postsDetails.posts");
-  this.populate("likesDetails.likes");
+  this.populate("likesDetails.likedPosts");
   this.populate("commentsDetails.comments");
   this.populate("notificationsDetails.notifications");
   this.populate("bookmarksDetails.bookmarks");
+});
+
+userSchema.virtual("followersCount").get(function () {
+  return this.connections.followers.users.length;
+});
+
+userSchema.virtual("followingCount").get(function () {
+  return this.connections.following.users.length;
+});
+
+userSchema.virtual("postsCount").get(function () {
+  return this.postsDetails.posts.length;
+});
+
+userSchema.virtual("likedPostCount").get(function () {
+  return this.likesDetails.likedPosts.length;
+});
+
+userSchema.virtual("commentsCount").get(function () {
+  return this.commentsDetails.comments.length;
+});
+
+userSchema.virtual("notificationsCount").get(function () {
+  return this.notificationsDetails.notifications.length;
+});
+
+userSchema.virtual("bookmarksCount").get(function () {
+  return this.bookmarksDetails.bookmarks.length;
 });
 
 module.exports = { userSchema };

@@ -3,13 +3,20 @@ const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
 const notificationSchema = new Schema({
+  notificationType: {
+    type: String,
+    required: true,
+    trim: true,
+    minlength: 3,
+    maxlength: 20,
+  },
   notificationContent: {
     textContent: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
       minlength: 3,
-      maxlength: 1000,
+      maxlength: 100,
     },
     mediaContent: {
       mediaUrl: {
@@ -22,36 +29,38 @@ const notificationSchema = new Schema({
   postId: {
     type: Schema.Types.ObjectId,
     ref: "Post",
+    required: false,
   },
-
-  userId: {
+  notificationReceiver: {
     type: Schema.Types.ObjectId,
     ref: "User",
-  },
-
-  notificationType: {
-    type: String,
     required: true,
   },
-
-  isRead: {
-    type: Boolean,
-    required: true,
-    default: false,
-  },
-
   notificationAuthor: {
     type: Schema.Types.ObjectId,
     ref: "User",
+    required: true,
   },
-
-  notificationDate: {
+  notificationCreatedAt: {
     type: Date,
     required: true,
+    default: Date.now(),
   },
 });
 
-module.exports = { notificationSchema };
+notificationSchema.pre(["find", "findOne"], async function (next) {
+  const notification = this;
+  notification.populate("notificationReceiver");
+  notification.populate("notificationAuthor");
+  notification.populate("postId");
+  next();
+});
+
+notificationSchema.virtual("newFollowerHandleName").get(function () {
+  if (this.notificationType === "newFollower") {
+    return this.notificationAuthor.handleName;
+  }
+});
 
 const Notification = mongoose.model("Notification", notificationSchema);
 

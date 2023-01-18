@@ -11,16 +11,13 @@ const { Notification } = require("../schemas/notification.schema");
 
 const postsV1 = express.Router();
 
-postsV1.route("/").get(async (req, res) => {
+postsV1.get("/", async (req, res) => {
   try {
-    const foundPosts = await Post.find();
-    if (!foundPosts) {
-      res.status(404).json({
-        success: false,
-        message: "No posts found.",
-      });
-    }
-    res.json({ success: true, allPosts: foundPosts });
+    const allPosts = await Post.find({});
+    res.status(200).json({
+      success: true,
+      allPosts,
+    });
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -29,9 +26,113 @@ postsV1.route("/").get(async (req, res) => {
     });
   }
 });
-postsV1.route("/:id").post(verifyUser, async (req, res) => {
+postsV1
+  .route("/:id")
+  .get(verifyUser, async (req, res) => {
+    try {
+      const id = req.userId;
+      const foundUser = await User.findOne({
+        "personalDetails.handleName": id,
+      });
+      if (!foundUser) {
+        res.status(404).json({
+          success: false,
+          message: "User not found.",
+        });
+      }
+      const foundPosts = await Post.find({
+        postAuthor: foundUser._id,
+      });
+      res.status(200).json({
+        success: true,
+        userPosts: foundPosts,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: "Internal server error.",
+        error: error.message,
+      });
+    }
+  })
+  .post(verifyUser, async (req, res) => {
+    try {
+      const id = req.userId;
+      const foundUser = await User.findOne({
+        "personalDetails.handleName": id,
+      });
+      if (!foundUser) {
+        res.status(404).json({
+          success: false,
+          message: "User not found.",
+        });
+      }
+      const { post } = req.body;
+      const newPost = new Post({
+        postAuthor: foundUser._id,
+        postContent: {
+          textContent: post.text,
+          mediaContent: {
+            mediaUrl: post.mediaUrl,
+          },
+        },
+        postCreatedAt: new Date(),
+      });
+      const savedPost = await newPost.save();
+      const newNotification = new Notification({
+        notificationAuthor: foundUser._id,
+        notificationType: "post",
+        notificationDate: new Date(),
+        postId: savedPost._id,
+        notificationReceiver: foundUser._id,
+        notificationContent: {
+          textContent: "You just added a new post.",
+          mediaContent: {
+            mediaUrl:
+              post?.mediaUrl ||
+              foundUser.personalDetails?.profilePic?.picUrl ||
+              "",
+          },
+        },
+      });
+      const savedNotification = await newNotification.save();
+      foundUser.connections?.followers?.users?.forEach(async (follower) => {
+        const newNotification = new Notification({
+          notificationAuthor: foundUser._id,
+          notificationType: "post",
+          notificationCreatedAt: new Date(),
+          postId: savedPost._id,
+          notificationReceiver: follower,
+          notificationContent: {
+            textContent: `${foundUser.personalDetails.firstName} ${foundUser.personalDetails.lastName} just added a new post.`,
+            mediaContent: {
+              mediaUrl:
+                post?.mediaUrl ||
+                foundUser.personalDetails?.profilePic?.picUrl ||
+                "",
+            },
+          },
+        });
+        await newNotification.save();
+      });
+      res.status(200).json({
+        success: true,
+        newPost: savedPost,
+        notification: savedNotification,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: "Internal server error.....",
+        error: error.message,
+      });
+    }
+  });
+
+postsV1.route("/:id/:postId").delete(verifyUser, async (req, res) => {
   try {
     const id = req.userId;
+    const postId = req.params.postId;
     const foundUser = await User.findOne({
       "personalDetails.handleName": id,
     });
@@ -41,63 +142,6 @@ postsV1.route("/:id").post(verifyUser, async (req, res) => {
         message: "User not found.",
       });
     }
-    const { post } = req.body;
-    const newPost = new Post({
-      postAuthor: foundUser._id,
-      postContent: {
-        textContent: post.textContent,
-        mediaContent: {
-          mediaUrl: post.mediaContentUrl,
-        },
-      },
-      postDate: Date.now(),
-    });
-    const savedPost = await newPost.save();
-    foundUser.postsDetails.posts.push(savedPost._id);
-    foundUser.postsDetails.postsCount = foundUser.postsDetails.posts.length;
-    if (!savedPost) {
-      res.status(500).json({
-        success: false,
-        message: "Internal server error.",
-      });
-    }
-    const newNotification = new Notification({
-      notificationContent: {
-        textContent: `${foundUser.personalDetails.handleName} has posted a new post.`,
-        mediaContent: {
-          mediaUrl: foundUser.personalDetails.profilePic.picUrl,
-        },
-      },
-      postId: savedPost._id,
-      userId: foundUser._id,
-      notificationType: "post",
-      notificationAuther: foundUser._id,
-      notificationDate: Date.now(),
-    });
-    const savedNotification = await newNotification.save();
-    foundUser.notificationsDetails.notifications.push(savedNotification._id);
-    if (!savedNotification) {
-      res.status(500).json({
-        success: false,
-        message: "Internal server error.",
-      });
-    }
-    const savedUser = await foundUser.save();
-    res.json({ success: true, newPost: savedPost, updatedUser: savedUser });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Internal server error.",
-      error: error.message,
-    });
-  }
-});
-postsV1.route("/:postId/:id").post(verifyUser, async (req, res) => {
-  try {
-    const id = req.userId;
-    const postId = req.params.postId;
-
-    const { post } = req.body;
     const foundPost = await Post.findOne({
       _id: postId,
     });
@@ -107,27 +151,23 @@ postsV1.route("/:postId/:id").post(verifyUser, async (req, res) => {
         message: "Post not found.",
       });
     }
-    foundPost.postContent.textContent = post.textContent;
-    foundPost.postContent.isContentEdited = true;
-
-    const savedPost = await foundPost.save();
-
-    if (!savedPost) {
-      res.status(500).json({
+    if (foundPost.postAuthor._id.toString() !== foundUser._id.toString()) {
+      res.status(401).json({
         success: false,
-        message: "Internal server error.",
+        message: "Unauthorized.",
       });
     }
-    const foundUser = await User.findOne({
+    await Post.deleteOne({
+      _id: postId,
+    });
+    const updatedUser = await User.findOne({
       "personalDetails.handleName": id,
     }).populate("postsDetails.posts");
-    if (!foundUser) {
-      res.status(404).json({
-        success: false,
-        message: "User not found.",
-      });
-    }
-    res.json({ success: true, updatedPost: savedPost, updatedUser: foundUser });
+    res.status(200).json({
+      success: true,
+      message: "Post deleted successfully.",
+      updatedUser: updatedUser,
+    });
   } catch (error) {
     res.status(500).json({
       success: false,

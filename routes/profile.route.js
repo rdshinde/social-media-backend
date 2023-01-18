@@ -10,7 +10,7 @@ const { updatePersonalDetails } = require("../utils/updatePersonalDetails");
 
 profileV1.route("/").get(async (req, res) => {
   try {
-    const foundUser = await User.find();
+    const foundUser = await User.find({});
     if (!foundUser) {
       res.status(404).json({
         success: false,

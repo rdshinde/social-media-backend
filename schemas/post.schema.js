@@ -6,10 +6,10 @@ const postSchema = new Schema({
   postContent: {
     textContent: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
       minlength: 3,
-      maxlength: 1000,
+      maxlength: 10000,
     },
     mediaContent: {
       mediaUrl: {
@@ -18,6 +18,7 @@ const postSchema = new Schema({
         trim: true,
       },
     },
+
     isContentEdited: {
       type: Boolean,
       required: true,
@@ -27,7 +28,17 @@ const postSchema = new Schema({
   postAuthor: {
     type: Schema.Types.ObjectId,
     ref: "User",
+    required: true,
   },
+  postLikes: {
+    users: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+  },
+
   postComments: {
     comments: [
       {
@@ -35,30 +46,37 @@ const postSchema = new Schema({
         ref: "Post",
       },
     ],
-    required: false,
   },
-  postLikes: {
-    likes: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
-    required: false,
-  },
-  postDate: {
+  postCreatedAt: {
     type: Date,
     required: true,
+    default: Date.now(),
   },
 });
 
-postSchema.pre(["find", "findOne"], function () {
-  this.populate("postLikes.likes");
-  this.populate("postComments.comments");
-  this.populate("postAuthor");
+postSchema.virtual("postLikesCount").get(function () {
+  return this.postLikes.users.length;
 });
 
-module.exports = { postSchema };
+postSchema.virtual("postCommentsCount").get(function () {
+  return this.postComments.comments.length;
+});
+
+postSchema.pre("save", function (next) {
+  const post = this;
+  if (post.isModified("postContent")) {
+    post.postContent.isContentEdited = true;
+  }
+  next();
+});
+
+postSchema.pre(["find", "findOne"], function (next) {
+  this.populate("postAuthor");
+  this.populate("postLikes.users");
+  this.populate("postComments.comments");
+  next();
+});
+
 const Post = mongoose.model("Post", postSchema);
 
 module.exports = { Post };
